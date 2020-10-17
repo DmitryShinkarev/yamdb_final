@@ -1,0 +1,37 @@
+version: '3.8'
+
+volumes:
+  postgres_data:
+  static_volume:
+
+services:
+  db:
+    image: postgres:latest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - './.env'
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    command: gunicorn api_yamdb.wsgi:application --bind 0.0.0.0:8000
+    #command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - static_volume:/usr/src/app/static
+    expose:
+      - 8000
+    env_file:
+      - './.env'
+    depends_on:
+      - db
+  nginx:
+    build: ./nginx
+    volumes:
+      - static_volume:/usr/src/app/static
+    ports:
+      - 8000:80
+    depends_on:
+      - web
+    
